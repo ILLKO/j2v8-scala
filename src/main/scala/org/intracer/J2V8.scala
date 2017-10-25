@@ -1,21 +1,24 @@
 package org.intracer
 
-import com.eclipsesource.v8.JavaCallback
-import com.eclipsesource.v8.NodeJS
-import com.eclipsesource.v8.V8Array
-import com.eclipsesource.v8.V8Function
-import com.eclipsesource.v8.V8Object
+import java.io.File
+
+import com.eclipsesource.v8.{JavaCallback, NodeJS, V8Array, V8Object}
 
 object J2V8 {
 
   def main(args: Array[String]): Unit = {
-    import com.eclipsesource.v8.V8
-    val runtime = V8.createV8Runtime
-    val result = runtime.executeIntegerScript("var hello = 'hello, ';\n"
-      + "var world = 'world!';\n"
-      + "hello.concat(world).length;\n"
-    )
-    System.out.println(result)
+    val nodeJS = NodeJS.createNodeJS
+    val callback = new JavaCallback() {
+      override def invoke(receiver: V8Object, parameters: V8Array) = "Hello, JavaWorld!"
+    }
+    nodeJS.getRuntime.registerJavaMethod(callback, "someJavaMethod")
+
+    val nodeScript = new File("web/nodejs.js")
+    nodeJS.exec(nodeScript)
+    while (nodeJS.isRunning) {
+      nodeJS.handleMessage
+    }
+    nodeJS.release()
   }
 
 }
