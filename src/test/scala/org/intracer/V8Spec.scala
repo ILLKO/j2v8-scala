@@ -19,8 +19,7 @@ class V8Spec extends Specification {
     "pass data from/to java" in {
       val runtime = V8.createV8Runtime()
 
-      val dataFile = new File("data/zips.json")
-      val lines = Source.fromFile(dataFile).getLines().toBuffer
+      val lines = Source.fromFile(new File("data/zips.json")).getLines().toBuffer
 
       val dataCallback = new JavaCallback() {
         override def invoke(receiver: V8Object, parameters: V8Array): V8Array = v8Strings(lines, runtime)
@@ -33,6 +32,29 @@ class V8Spec extends Specification {
 
       ids === lines.length
     }
+
+    "fetch data" in {
+      val runtime = V8.createV8Runtime()
+      var response = ""
+      val responseCallback = new JavaCallback() {
+        override def invoke(receiver: V8Object, parameters: V8Array)  = {
+          response = parameters.getString(0)
+          "something"
+        }
+      }
+      runtime.registerJavaMethod(responseCallback, "responseCallback")
+
+      val script = Source.fromFile(new File("web/fetch.js")).getLines().toBuffer.mkString("\n")
+
+      runtime.executeVoidScript(script)
+
+//      Thread.sleep(10000)
+      eventually {
+        response === "qwerty"
+      }
+//      ids === lines.length
+    }
+
   }
 
 }
